@@ -1,2 +1,2 @@
-# Data-_Analytics
+# Data_Analytics
 Data Analysis Case Studies
