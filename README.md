@@ -1,2 +1,2 @@
 # Data_Analytics
-Data Analysis Case Studies
+Data Analytics Projects

@@ -1,0 +1,360 @@
+---
+title: "Bellabeat - How Can A Wellness Technological Company Play It Smart ?"
+Author: Realeboha Motlamelle
+Date: March 2022
+output: html_document
+---
+
+## Introduction
+The following case study is a capstone project from the Google data analytics professional certificate. To answer the business question, the steps of the  data analysis process are followed: ask, prepare, process, analyze, share and act.
+
+## 1. ASK
+
+### Bakckground
+
+Bellabeat is a potential large player in the global smart device market that manufactures high-tech health-focused products for women. The company was founded in 2013 by Ušrka Sršen and Sando Mur. They have four products in the market that  collect data on activity, sleep, stress and reproductive health to empower women with knowledge about their own health and habits.
+
+The aim of the project is to analyze smart device usage data in order to gain insight into how consumers use non-Bellabeat smart devices to help guide marketing strategy for the company.
+
+Key Questions:
+
+1. What are some of the trends in smart device usage?
+2. How could these trends apply to Bellabeat customers?
+3. How could these trends help influence Bellabeat marketing strategy?
+
+Deliverables:
+
+1. A summary of the business task
+2. A description of data sources used
+3. Documentation of any cleaning or manipulation of data
+4. A summary of the analysis
+5. High-level content recommendations based on the analysis
+
+## 2. Prepare
+
+The data used is Fitbit Fitness Tracker from Kaggle generated from a survey via Amazon Mechanical Turk between 12 March to 12 May 2016. It contains personal fitness tracker information from thirty fitbit users who consented to the submission of personal tracker data, including daily activity, steps and heart rate. The data is stored in 18 csv files.
+
+### Data Integrity
+
+Data Limitations
+
+The data was collected in 2016 and might not be relevant anymore due to a change in user’s activity, sleeping and health habits in the past years. The sample size of 30 is inadequate in representing the entire population of female Fitbit users. The data does not provide any additional info on users such as age which is critical in health and wellness analyses.
+
+A good data source is reliable, original, comprehensive, current and cited (ROCCC). Checking the Fitbit User Data:
+
+1. Unreliable - small sample size.
+2. Not original - Third party data.
+3. Comprehensive - Matches data from Bellabeat products.
+4. Not current - data collected over 5 years ago.
+5. Not cited - Third party data.
+
+
+
+
+## 3. Process
+
+R programming is used for data cleaning, transformation, analysis and visualization.
+
+### Installing and loading common packages and libraries
+
+```{r}
+install.packages('tidyverse')
+library(tidyverse)
+```
+
+```{r}
+install.packages('here')
+library(here)
+```
+
+```{r}
+install.packages('skimr')
+library(skimr)
+```
+```{r}
+install.packages('janitor')
+library(janitor)
+```
+```{r}
+install.packages('dplyr')
+library(dplyr)
+```
+
+```{r}
+install.packages("ggplot2")
+library(ggplot2)
+```
+
+```{r}
+install.packages("lubridate")
+library(lubridate)
+```
+```{r}
+install.packages("RColorBrewer")
+library(RColorBrewer)
+```
+Selecting a color blind friendly palette.
+```{r}
+display.brewer.all(colorblindFriendly = T)
+display.brewer.pal(5,"Set2")
+```
+
+### Importing data into R
+
+Here we created data frames named 'daily_activity' and 'sleep_day' by reading the CSV files from the data sets.
+
+```{r}
+daily_activity <- read.csv("dailyActivity_merged.csv")
+```
+
+```{r}
+sleep_day <- read.csv("sleepDay_merged.csv")
+```
+
+### Exploring a few key tables
+
+Check basic information about the data: column names, no of observations, data type, formatting and number of missing values.
+
+Take a look at the daily_activity data.
+```{r}
+head(daily_activity)
+```
+
+Identify all the columns in the daily_activity data.
+```{r}
+colnames(daily_activity)
+```
+
+Take a look at the sleep_day data.
+```{r}
+head(sleep_day)
+```
+
+Identify all the columns in the sleep_day data.
+```{r}
+colnames(sleep_day)
+```
+
+"User Id” field appears in daily_activity and sleep_day.It can therefore be used to merge the two data sets.
+
+### Data cleaning
+
+To ensure the data id clean before analysis, it is checked for: missing value, errors, misspellings,duplicates etc. The data is then cleaned and transformed.
+
+### Check data info
+
+```{r}
+str(daily_activity)
+```
+```{r}
+str(sleep_day)
+```
+### Check for missing values
+
+```{r}
+which(is.na(daily_activity))
+which(is.na(sleep_day))
+```
+
+### Check number of unquie participants
+
+```{r distonct users}
+n_distinct(daily_activity$Id)
+n_distinct(sleep_day$Id)
+
+```
+
+### Data Summary
+
+1. There are 33 unique user IDs instead of 30 in the activity data.
+2. There are more participants in the daily activity data set than the sleep data set with only 24 user Ids.
+3. The Activity Date is of char data type instead of Date.
+4. There are no missing values.
+
+
+
+
+## 4. Analyze
+
+### Summary statistics
+
+Check for observations in each data frame.
+```{r observations}
+nrow(daily_activity)
+nrow(sleep_day)
+```
+
+Quick summary statistics about each data frame.
+
+For the daily activity data frame:
+```{r}
+daily_activity %>%  
+  select(TotalSteps,
+         SedentaryMinutes,Calories) %>%
+  summary()
+```
+According to the summary, the average user:
+
+1. Takes 7406 steps a day. The CDC recommends setting a goal of 10,000 each day.
+2. Spends 1057 out of 1440 minutes per day inactive.
+3.Burns 2340 calories in a day.
+
+For the sleep data frame:
+```{r}
+sleep_day %>%  
+  select(TotalSleepRecords,
+  TotalMinutesAsleep,
+  TotalTimeInBed) %>%
+  summary()
+```
+According to the summary the average user:
+
+1. Record sleep at least once a daily.
+2. Spends 458 minute(~8 hours) in bed and 419 asleep (~7 hours).
+
+
+
+
+## Identifying trends and relationships
+
+### Explore the relationship between steps and sedentary minutes
+
+What's the relationship between steps taken in a day and sedentary minutes? How could this help inform the customer segments that we can market to? E.g. position this more as a way to get started in walking more? Or to measure steps that they are already taking?
+
+```{r}
+ggplot(data=daily_activity, aes(x=TotalSteps, y=SedentaryMinutes)) + geom_point(colour="blueviolet") + geom_smooth(color = "aquamarine2") + labs( title = "Plot of Total Steps vs Sedentary Minutes")
+```
+
+The scatter plot above shows that between 0- 10 000 steps, sedentary minutes decreases with increasing steps. The more daily steps a user takes, the less time they spend seated or inactive. The device can include a pop up that notifies a user when they have been inactive for 1 hour and encourage them to move.
+
+
+### Explore the relatonship between total minutes asleep and total time in bed.
+
+What's the relationship between total minutes asleep and time in bed? Is it almost linear? Are there any unexpected trends? How could this help inform the customer segments that we can market to? E.g position this as getting into bed earlier as a way to get adequate rest? Or to measure sleeping patterns?
+
+```{r}
+
+ggplot(data=sleep_day) + geom_smooth(mapping= aes(x=TotalMinutesAsleep, y=TotalTimeInBed),color = "aquamarine2") + geom_point(mapping= aes(x=TotalMinutesAsleep, y=TotalTimeInBed),color= "blueviolet") + labs(title = "Plot of Total Minutes Asleep vs Total Minutes Asleep")
+```
+
+The scatter plot above shows a positive correlation between time spend asleep and time spend in bed. This can be used to encourage users to get into bed earlier in order to get the recommend amount of sleep. By tracking the time spend asleep, users can also measure their sleeping patterns and make necessary adjustments to improve their sleeping habits.
+
+
+
+
+### Explore the relatonship between total steps and calories.
+
+What's the relationship between step count and calories? How could this help inform the customer segments that we can market to? E.g Does taking more steps lead to increased calories ? Use steps count to assist weight loss ?
+
+```{r}
+ggplot(data=daily_activity, aes(x =TotalSteps, y=Calories)) + geom_point(color= "blueviolet") +geom_smooth(color = "aquamarine2") + labs(title = "Plot of Total Steps vs Calories")
+```
+There is a positive correlation between the number of steps and calories burnt. This can be used to target users who are looking to loose or maintain weight to increase their daily steps as a way to burn more calories and get closer to their weight goals. 
+
+
+
+
+### Merging these two datasets together
+ 
+Since there are more participant Ids in the daily activity data set than in the sleep day data set, an outer join is used to merge the two data sets without filtering out any Ids.
+
+```{r}
+combined_data <- merge(sleep_day, daily_activity, all = TRUE)
+```
+
+```{r}
+colnames(combined_data)
+```
+Take a look at how many participants are in this combined data set.
+
+```{r}
+n_distinct(combined_data$Id)
+```
+
+
+### Explore user activity in minutes
+
+What activities are people mostly logging into their smart devices? How does this relate to the market segment we are trying to target? E.g Get people to track their daily workouts at home, gym or outdoor ? 
+
+```{r}
+Sedentary <- sum(combined_data$SedentaryMinutes)
+Active <- sum(combined_data$VeryActiveMinutes)
+Fairly <- sum(combined_data$FairlyActiveMinutes)
+Lightly <- sum(combined_data$LightlyActiveMinutes)
+
+x <- c(Sedentary,Lightly,Fairly,Active)
+labels <- c("Sedentary", "Lightly Active", "Fairly Active", "Very Active")
+
+piepercent <- round(100*x/sum(x),1)
+
+labels <- paste0(piepercent,"%")
+
+colour = brewer.pal(length(piepercent), "Set2")
+
+pie(x,labels ,main = "Active Minutes Pie Chart",col =colour,cex = 0.55)
+
+legend("topright",c("Sedentary", "Lightly Active", "Fairly Active", "Very Active"),cex = 0.7, fill = colour)
+```
+
+The pie char chart above shows that users spend 81.3 % of their time in a day inactive and only 1.7 % involved in a very active state. This can be used to encourage users to increase their daily active minutes and reduce sedentary minutes by being more active through the day. Taking the stairs instead of the elevator, joining a local gym or yoga club, walking to the nearest grocery store instead of driving etc are some of the activities users can be encouraged to do while keeping track of their daily active minutes.
+
+
+### Explore activity frequency throughout the week
+
+Does daily activity vary with the day of the week ? How could this help inform the customer segments that we can market to? E.g. position this more as a way to get people to do outdoor activities during the weekend such as hiking or tennis etc? Or to measure steps that you're already taking to ensure consistent activity through the week?
+
+### Change ActivityDate To Date Format 
+
+Add a new column in the data frame converting 'char' into 'Date'. Check updated column names.
+```{r}
+combined_data$ActivityDate2 <- mdy(combined_data$ActivityDate)
+
+colnames(combined_data)
+```
+
+Add a new column in the data frame converting activity date into days of the week.Check new column.
+```{r}
+combined_data$weekday <- wday(combined_data$ActivityDate2, label = TRUE)
+
+head(combined_data$weekday)
+```
+
+```{r}
+ggplot(data = combined_data, aes( x= weekday)) + geom_bar(fill =brewer.pal(7,"Set2")) + labs(title = "No. of times users logged activity in a week ", x = "Day of the week", y ="Activity frequency")
+```
+
+As can be seen from the bar chart above, user daily activity varies throughout the week. Activity is high midweek between Tuesday and Thursday. The frequency drops towards the weekend and on Mondays. This can be used to encourage users to do fun activities during the weekend such as hiking,running a marathon or joining a sports team in their area. Measuring their activity will ensure consistent  activity frequency throughout the week.
+
+
+
+
+## 5. SHARE 
+
+For the market segment the company is aiming to reach, the analysis shows that :
+
+1. There is a negative correlation between total steps and sedentary minutes.
+
+2. There is a positive correlation between total steps and calories burnt.
+
+3.There is a positive correlation between minutes spend in bed and minutes spend asleep.
+
+4. The average user logged 81.3 % sedentary minutes and less than 20% active minutes (15.8 % lightly active, 1.7 % fairly active and 1.1 % very active).
+
+5. Daily activity is high midweek and slightly reduces from Friday until Monday.
+
+
+
+
+## 6. ACT
+
+From the findings the following high level content recommendations can be made to the marketing strategy team :
+
+1. Educate users on the harmful effects of not getting enough physical activity and encourage them to track their daily active minutes.
+
+2. Encourage users to use the their devices to set their daily steps goal of at least 10, 000 and track it throughout the day. This will help them to burn more calories to either maintain a healthy body weight or to lose weight. This will also help reduce daily sedentary minutes.
+
+3. Encourage users to use their devices to stay physically active throughout the week, even on weekends, by keeping track of their daily active minutes and step count.
+
+4. Educate users on the benefits of sleep and effects of sleep deprivation.
+
+5. Encourage users to go to bed earlier to ensure they get adequate sleep and use their devices to track sleeping patterns.
