@@ -1,2 +1,2 @@
 # Data_Analytics
-Data Analytics Projects
+Data Science Projects
